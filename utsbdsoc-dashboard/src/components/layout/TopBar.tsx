@@ -3,7 +3,6 @@
 import React from 'react'
 import { Bell, Search, Menu } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import { cn } from '@/lib/utils'
 
 interface TopBarProps {
   onToggleSidebar?: () => void
@@ -59,6 +58,7 @@ export default function TopBar({ onToggleSidebar }: TopBarProps) {
             <span className="text-[10px] text-accent-gold font-mono font-bold uppercase tracking-widest mt-0.5">Admin</span>
           </div>
           <div className="w-8 h-8 rounded-full bg-bg-elevated border border-accent-gold/30 p-0.5 overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wasif" 
               alt="User" 

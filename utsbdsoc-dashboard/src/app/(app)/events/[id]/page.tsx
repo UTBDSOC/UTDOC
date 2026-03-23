@@ -1,22 +1,26 @@
+import { mockEvents, mockTasks, mockMembers } from "@/lib/mock-data";
+import EventDetail from "@/components/events/EventDetail";
+import { notFound } from "next/navigation";
+
 export default async function EventDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  
+  const event = mockEvents.find(e => e.id === id);
+  if (!event) {
+    notFound();
+  }
+
+  const tasks = mockTasks.filter(t => t.event_id === id);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Event Detail</h1>
-        <p className="mt-1 text-sm text-text-secondary">Event ID: {id}</p>
-      </div>
-
-      <div className="rounded-xl bg-bg-card border border-bg-elevated p-8 text-center">
-        <p className="text-text-secondary">
-          Event detail view coming soon.
-        </p>
-      </div>
-    </div>
+    <EventDetail 
+      event={event} 
+      tasks={tasks} 
+      members={mockMembers} 
+    />
   );
 }

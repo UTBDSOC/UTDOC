@@ -11,6 +11,17 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "env:check": "tsx scripts/check-env.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:headed": "playwright test --headed",
+    "e2e:codegen": "playwright codegen localhost:3000",
+    "analyze": "ANALYZE=true next build",
+    "security:check": "tsx scripts/check-security.ts",
+    "lighthouse": "lhci autorun",
     "db:generate": "npx prisma generate",
     "db:migrate": "npx prisma migrate dev",
     "db:seed": "npx prisma db seed",
@@ -30,28 +41,38 @@
     ]
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^7.5.0",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.99.3",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "geist": "^1.7.0",
     "lucide-react": "^0.577.0",
     "next": "16.2.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "tailwind-merge": "^3.5.0"
+    "react-dropzone": "^15.0.0",
+    "react-hook-form": "^7.72.0",
+    "tailwind-merge": "^3.5.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
+    "@next/bundle-analyzer": "^16.2.1",
+    "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.1",
     "dotenv": "^17.3.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "prisma": "^7.5.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.0"
   }
 }

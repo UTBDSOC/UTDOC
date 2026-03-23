@@ -1,20 +1,18 @@
+import EventCreationWizard from "@/components/events/EventCreationWizard";
+
 export default function NewEventPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">
+    <div className="space-y-8">
+      <div className="max-w-4xl mx-auto text-center">
+        <h1 className="text-3xl font-bold text-text-primary font-sans">
           Create New Event
         </h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          Fill in the details to create a new event.
+        <p className="mt-2 text-text-secondary max-w-lg mx-auto">
+          Set up your event with auto-assigned tasks, team roles, and EOP compliance tracking in a few simple steps.
         </p>
       </div>
 
-      <div className="rounded-xl bg-bg-card border border-bg-elevated p-8 text-center">
-        <p className="text-text-secondary">
-          Event creation form coming soon.
-        </p>
-      </div>
+      <EventCreationWizard />
     </div>
   );
 }
