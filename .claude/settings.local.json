@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(cd:*)",
+      "mcp__claude_ai_Notion__notion-search",
+      "mcp__claude_ai_Notion__notion-fetch",
+      "Bash(cd \"/c/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC\" && npx create-next-app@latest utsbdsoc-dashboard --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm 2>&1)",
+      "Bash(cd \"/c/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC\" && echo -e \"no\\\\nno\" | npx create-next-app@latest utsbdsoc-dashboard --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --turbopack 2>&1)",
+      "Bash(cd \"/c/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC\" && printf 'n\\\\nn\\\\n' | npx create-next-app@latest utsbdsoc-dashboard --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --turbopack 2>&1)",
+      "Bash(cd \"/c/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC\" && yes \"no\" | npx create-next-app@latest utsbdsoc-dashboard --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --turbopack 2>&1)",
+      "Bash(cd \"/c/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npm install prisma @prisma/client @supabase/supabase-js @supabase/ssr lucide-react clsx tailwind-merge geist 2>&1)",
+      "Bash(cd \"/c/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npx prisma init 2>&1)",
+      "Bash(cd \"/c/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npm install -D tsx dotenv 2>&1)",
+      "Bash(cd \"/c/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npx prisma generate 2>&1)",
+      "Bash(cd \"/c/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npx next build 2>&1)",
+      "Bash(true:*)"
+    ]
+  }
+}
