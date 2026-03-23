@@ -21,6 +21,7 @@
     "e2e:codegen": "playwright codegen localhost:3000",
     "analyze": "ANALYZE=true next build",
     "security:check": "tsx scripts/check-security.ts",
+    "health:check": "tsx scripts/check-health.ts",
     "lighthouse": "lhci autorun",
     "db:generate": "npx prisma generate",
     "db:migrate": "npx prisma migrate dev",

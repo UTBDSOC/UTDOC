@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## UTSBDSOC Dashboard
+
+Event management dashboard for UTS Bangladeshi Society.
 
 ## Getting Started
 
-First, run the development server:
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Quality and Test Commands
+
+```bash
+npm run lint
+npm run type-check
+npm run test:coverage
+npm run e2e -- --project=chromium
+```
+
+## Production Readiness Commands
+
+```bash
+npm run env:check
+npm run security:check
+npm run analyze
+npm run lighthouse
+HEALTHCHECK_URL=https://your-domain/api/health npm run health:check
+```
+
+## CI/CD
+
+- `.github/workflows/ci.yml`: lint, test, build, e2e, lighthouse
+- `.github/workflows/db-migrate.yml`: manual Prisma deploy migration
+- `.github/dependabot.yml`: weekly dependency updates
+
+## Deployment Runbook
+
+See `scripts/deployment-runbook.md`.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+## Error Tracking (Sentry)
 
-To learn more about Next.js, take a look at the following resources:
+Recommended production setup:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `NEXT_PUBLIC_SENTRY_DSN`
+- `SENTRY_AUTH_TOKEN`
+- `SENTRY_ORG`
+- `SENTRY_PROJECT`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Add Sentry SDK setup later in frontend/backend owner files; these environment variables are pre-documented in `.env.example`.
