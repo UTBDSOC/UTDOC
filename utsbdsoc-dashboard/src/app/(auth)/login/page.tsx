@@ -23,7 +23,7 @@ export default function LoginPage() {
         <div className="bg-bg-card border border-white/10 rounded-2xl p-8 shadow-2xl">
           <div className="space-y-6">
             {/* Google Sign In */}
-            <button className="w-full flex items-center justify-center gap-3 bg-accent-gold hover:bg-accent-gold/90 text-bg-primary font-bold py-3 rounded-xl transition-all shadow-lg shadow-accent-gold/10 group">
+            <button onClick={() => alert('Authentication is currently disabled in the demo.')} className="w-full flex items-center justify-center gap-3 bg-accent-gold hover:bg-accent-gold/90 text-bg-primary font-bold py-3 rounded-xl transition-all shadow-lg shadow-accent-gold/10 group">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
@@ -66,7 +66,7 @@ export default function LoginPage() {
                 </div>
               </div>
               
-              <button className="w-full flex items-center justify-center gap-2 border border-white/10 hover:bg-white/5 text-text-primary font-semibold py-3 rounded-xl transition-all group">
+              <button onClick={() => alert('Authentication is currently disabled in the demo.')} className="w-full flex items-center justify-center gap-2 border border-white/10 hover:bg-white/5 text-text-primary font-semibold py-3 rounded-xl transition-all group">
                 Send Magic Link
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>

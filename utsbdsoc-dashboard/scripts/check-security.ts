@@ -32,13 +32,31 @@ checks.push({
     : "Missing CRON_SECRET in .env.local",
 });
 
-let vercelConfig: any = null;
+const sentryVars = [
+  "NEXT_PUBLIC_SENTRY_DSN",
+  "SENTRY_AUTH_TOKEN",
+  "SENTRY_ORG",
+  "SENTRY_PROJECT",
+];
+
+const missingSentry: string[] = [];
+for (const envVar of sentryVars) {
+  const exists = new RegExp(`(^|\\n)${envVar}=.+`, "m").test(envFile);
+  checks.push({
+    name: `Sentry variable: ${envVar}`,
+    ok: exists,
+    detail: exists ? "Configured in .env.local" : "Missing in .env.local",
+  });
+  if (!exists) missingSentry.push(envVar);
+}
+
+let vercelConfig: Record<string, unknown> | null = null;
 if (fs.existsSync(vercelPath)) {
   vercelConfig = JSON.parse(fs.readFileSync(vercelPath, "utf8"));
 }
 
 const apiHeaders: Array<{ key: string; value: string }> =
-  vercelConfig?.headers?.find((h: any) => h.source === "/api/(.*)")?.headers ?? [];
+  (vercelConfig?.headers as Array<{ source: string, headers: Array<{key: string, value: string}> }> | undefined)?.find((h) => h.source === "/api/(.*)")?.headers ?? [];
 
 const requiredHeaders = [
   "X-Content-Type-Options",
@@ -79,11 +97,25 @@ for (const check of checks) {
 }
 
 const failed = checks.filter((c) => !c.ok);
-if (failed.length > 0) {
+const nonSentryFailures = failed.filter((c) => !c.name.startsWith("Sentry variable:"));
+if (nonSentryFailures.length > 0) {
   console.log(
-    `\n${colors.red}${colors.bold}Failed ${failed.length} security check(s).${colors.reset}`
+    `\n${colors.red}${colors.bold}Failed ${nonSentryFailures.length} required security check(s).${colors.reset}`
   );
   process.exit(1);
+}
+
+if (missingSentry.length > 0) {
+  const isCI = process.env.CI === "true";
+  const level = isCI ? colors.red : colors.yellow;
+  console.log(
+    `\n${level}${colors.bold}Sentry production variables missing: ${missingSentry.join(
+      ", "
+    )}${colors.reset}`
+  );
+  if (isCI) {
+    process.exit(1);
+  }
 }
 
 console.log(`\n${colors.green}${colors.bold}All security checks passed.${colors.reset}`);

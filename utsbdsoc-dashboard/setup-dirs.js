@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
-const path = require('path');
 
 // Create directories
 const dirs = ['.vscode', '.github/workflows', 'scripts'];
@@ -22,8 +22,8 @@ const files = {
     "*.css": "tailwindcss"
   },
   "tailwindCSS.experimental.classRegex": [
-    ["clsx\\\\(([^)]*)\\\\)", "(?:'|\\"|\\`)([^']*)(?:'|\\"|\\`)"],
-    ["cn\\\\(([^)]*)\\\\)", "(?:'|\\"|\\`)([^']*)(?:'|\\"|\\`)"]
+    ["clsx\\\\(([^)]*)\\\\)", "(?:'|\\\"|\\\`)([^']*)(?:'|\\\"|\\\`)"],
+    ["cn\\\\(([^)]*)\\\\)", "(?:'|\\\"|\\\`)([^']*)(?:'|\\\"|\\\`)"]
   ],
   "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
   "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },

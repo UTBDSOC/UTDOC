@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Conventional commit pattern
+COMMIT_MSG=$(cat "$1")
+PATTERN="^(feat|fix|docs|style|refactor|test|chore|ci|perf)(\(.+\))?!?: .{1,100}$"
+
+if ! echo "$COMMIT_MSG" | grep -qE "$PATTERN"; then
+  echo "❌ Invalid commit message format!"
+  echo ""
+  echo "Expected: type(scope): description"
+  echo "Types: feat, fix, docs, style, refactor, test, chore, ci, perf"
+  echo "Example: feat(events): add event creation form"
+  exit 1
+fi

@@ -1,9 +1,28 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import EventList from "@/components/events/EventList";
+import { prisma } from "@/lib/prisma";
+import { serializeEvent } from "@/lib/serializers";
 import { mockEvents } from "@/lib/mock-data";
+import type { Event } from "@/types";
 
-export default function EventsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function EventsPage() {
+  let serialized: Event[];
+
+  try {
+    const events = await prisma.event.findMany({
+      where: { status: { not: "archived" } },
+      include: { mainContact: true },
+      orderBy: { date: "desc" },
+    });
+    serialized = events.map(serializeEvent);
+  } catch (err) {
+    console.warn("Database unavailable, using mock data:", (err as Error).message);
+    serialized = mockEvents;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -22,7 +41,7 @@ export default function EventsPage() {
         </Link>
       </div>
 
-      <EventList events={mockEvents} />
+      <EventList events={serialized} />
 
       {/* Floating Action Button */}
       <Link

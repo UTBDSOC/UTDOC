@@ -31,6 +31,22 @@ npm run lighthouse
 HEALTHCHECK_URL=https://your-domain/api/health npm run health:check
 ```
 
+## Sprint 4 Operational Hardening
+
+- Post-deploy verification workflow:
+  - `.github/workflows/post-deploy-verify.yml`
+  - Runs `security:check` and `health:check` for staging/production
+- Incident handling:
+  - `.github/ISSUE_TEMPLATE/production-incident.yml`
+  - `scripts/incident-escalation-runbook.md`
+
+### Manual post-deploy verification
+
+```bash
+npm run security:check
+HEALTHCHECK_URL=https://your-domain/api/health HEALTHCHECK_EXPECTED_STATUS=ok npm run health:check
+```
+
 ## CI/CD
 
 - `.github/workflows/ci.yml`: lint, test, build, e2e, lighthouse

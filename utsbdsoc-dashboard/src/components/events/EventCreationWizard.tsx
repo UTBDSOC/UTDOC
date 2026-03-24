@@ -6,20 +6,17 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { 
-  Calendar, 
   MapPin, 
   Users, 
   CheckCircle2, 
   ChevronRight, 
   ChevronLeft, 
   ClipboardCheck, 
-  UserPlus, 
-  Search,
-  Check,
-  Layout
+  UserPlus,
+  Check
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { mockMembers } from '@/lib/mock-data'
+import type { Member } from '@/types'
 import DatePicker from '@/components/shared/DatePicker'
 import StatusBadge from '@/components/shared/StatusBadge'
 
@@ -33,6 +30,7 @@ const eventFormSchema = z.object({
   collab_clubs: z.string().optional(),
   main_contact_id: z.string().min(1, 'Please select a main contact'),
   tasks: z.array(z.object({
+    id: z.string(),
     title: z.string(),
     category: z.string(),
     isChecked: z.boolean()
@@ -45,26 +43,40 @@ const eventFormSchema = z.object({
 
 type EventFormValues = z.infer<typeof eventFormSchema>
 
-const taskCategories = [
-  { 
-    name: 'General', 
-    tasks: ['Venue booking', 'Date selection', 'Availability updates', 'Budget planning'] 
-  },
-  { 
-    name: 'Contracts & Proposals', 
-    tasks: ['Sponsorship proposal', 'Sponsorship contract', 'Event proposal (EOP)', 'Risk assessment', 'Food handling certificate', 'Grant application', 'Inter-club agreement'] 
-  },
-  { 
-    name: 'Marketing', 
-    tasks: ['Theme/name brainstorm', 'Poster design', 'Social media posts', 'Marketing timeline', 'Reels/video', 'Website listing'] 
-  },
-  { 
-    name: 'Event Program', 
-    tasks: ['Runsheet', 'Performers/speakers', 'Media coverage', 'Floor plan'] 
-  }
-]
+interface TaskTemplate {
+  id: string
+  text: string
+  category: string
+  sort_order: number
+}
 
-export default function EventCreationWizard() {
+interface EventCreationWizardProps {
+  templates?: TaskTemplate[]
+  members?: Member[]
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  GENERAL: 'General',
+  CONTRACTS_PROPOSALS: 'Contracts & Proposals',
+  MARKETING: 'Marketing',
+  EVENT_PROGRAM: 'Event Program',
+  DECORATIONS: 'Decorations',
+  FOOD_CATERING: 'Food & Catering',
+  FINANCE: 'Finance',
+}
+
+function buildTaskCategories(templates: TaskTemplate[]) {
+  const grouped: Record<string, { id: string; text: string }[]> = {}
+  for (const t of templates) {
+    const label = CATEGORY_LABELS[t.category] ?? t.category
+    if (!grouped[label]) grouped[label] = []
+    grouped[label].push({ id: t.id, text: t.text })
+  }
+  return Object.entries(grouped).map(([name, tasks]) => ({ name, tasks }))
+}
+
+export default function EventCreationWizard({ templates = [], members = [] }: EventCreationWizardProps) {
+  const taskCategories = buildTaskCategories(templates)
   const [step, setStep] = useState(1)
   const router = useRouter()
 
@@ -85,8 +97,8 @@ export default function EventCreationWizard() {
       description: '',
       collab_clubs: '',
       main_contact_id: '',
-      tasks: taskCategories.flatMap(cat => 
-        cat.tasks.map(task => ({ title: task, category: cat.name, isChecked: true }))
+      tasks: taskCategories.flatMap(cat =>
+        cat.tasks.map(task => ({ id: task.id, title: task.text, category: cat.name, isChecked: true }))
       ),
       team_assignments: []
     }
@@ -97,12 +109,45 @@ export default function EventCreationWizard() {
     name: "tasks"
   })
 
-  const onSubmit = (data: EventFormValues) => {
-    console.log('Submitting data:', data)
-    // Simulate API call
-    setTimeout(() => {
+  const watchedTasks = watch('tasks')
+
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const onSubmit = async (data: EventFormValues) => {
+    setIsSubmitting(true)
+    try {
+      const selectedTemplateIds = data.tasks
+        .filter(t => t.isChecked)
+        .map(t => t.id)
+
+      const res = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          date: data.date,
+          venue: data.venue,
+          estimated_attendance: data.estimated_attendance,
+          description: data.description,
+          collab_clubs: data.collab_clubs,
+          main_contact_id: data.main_contact_id || undefined,
+          selected_template_ids: selectedTemplateIds,
+          member_ids: data.team_assignments.map(a => a.member_id),
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        console.error('Failed to create event:', err)
+        return
+      }
+
       router.push('/events')
-    }, 1000)
+    } catch (err) {
+      console.error('Failed to create event:', err)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const nextStep = () => setStep(s => Math.min(s + 1, 4))
@@ -198,7 +243,7 @@ export default function EventCreationWizard() {
                   className="w-full bg-bg-elevated/50 border border-white/10 rounded-xl py-3 px-4 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50 transition-all shadow-inner appearance-none"
                 >
                   <option value="">Select a member...</option>
-                  {mockMembers.map(m => (
+                  {members.map(m => (
                     <option key={m.id} value={m.id}>{m.full_name} ({m.role})</option>
                   ))}
                 </select>
@@ -220,21 +265,21 @@ export default function EventCreationWizard() {
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-bold text-text-primary">Task Templates</h3>
-              <p className="text-xs text-text-secondary italic">Deselect tasks you don't need for this event.</p>
+              <p className="text-xs text-text-secondary italic">Deselect tasks you don&apos;t need for this event.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {taskCategories.map((cat) => (
                 <div key={cat.name} className="space-y-4">
                   <h4 className="text-xs font-bold text-accent-gold uppercase tracking-widest border-l-2 border-accent-gold pl-3">{cat.name}</h4>
                   <div className="space-y-2">
-                    {taskFields.filter(f => f.category === cat.name).map((field, idx) => {
+                    {taskFields.filter(f => f.category === cat.name).map((field) => {
                       const absoluteIndex = taskFields.findIndex(f => f.id === field.id)
                       return (
                         <label 
                           key={field.id}
                           className={cn(
                             "flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group",
-                            watch(`tasks.${absoluteIndex}.isChecked`) 
+                            watchedTasks?.[absoluteIndex]?.isChecked 
                               ? "bg-bg-elevated border-accent-gold/20 text-text-primary" 
                               : "bg-transparent border-white/5 text-text-secondary"
                           )}
@@ -266,10 +311,11 @@ export default function EventCreationWizard() {
                 Assign members to this event. You can also define specific roles and default task owners.
               </p>
               <div className="space-y-3 text-left">
-                {mockMembers.slice(0, 3).map(m => (
+                {members.slice(0, 3).map(m => (
                   <div key={m.id} className="flex items-center justify-between p-3 bg-bg-elevated rounded-xl border border-white/5">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={m.avatar_url} alt={m.full_name} />
                       </div>
                       <span className="text-sm font-semibold">{m.full_name}</span>
@@ -277,7 +323,7 @@ export default function EventCreationWizard() {
                     <StatusBadge status="completed" className="bg-accent-gold/10 text-accent-gold" />
                   </div>
                 ))}
-                <button className="w-full py-3 border border-dashed border-white/20 rounded-xl text-xs font-bold text-text-secondary hover:text-text-primary hover:border-accent-gold/50 transition-all uppercase tracking-widest">
+                <button type="button" onClick={() => alert('Search and add members functionality coming soon.')} className="w-full py-3 border border-dashed border-white/20 rounded-xl text-xs font-bold text-text-secondary hover:text-text-primary hover:border-accent-gold/50 transition-all uppercase tracking-widest">
                   Add Member to Event
                 </button>
               </div>
@@ -380,9 +426,10 @@ export default function EventCreationWizard() {
           ) : (
             <button
               type="submit"
-              className="flex items-center gap-2 px-10 py-3 rounded-xl bg-accent-gold text-bg-primary text-sm font-bold hover:bg-accent-gold/90 transition-all shadow-xl shadow-accent-gold/10"
+              disabled={isSubmitting}
+              className="flex items-center gap-2 px-10 py-3 rounded-xl bg-accent-gold text-bg-primary text-sm font-bold hover:bg-accent-gold/90 transition-all shadow-xl shadow-accent-gold/10 disabled:opacity-50"
             >
-              Create Event
+              {isSubmitting ? 'Creating...' : 'Create Event'}
               <CheckCircle2 className="w-4 h-4" />
             </button>
           )}

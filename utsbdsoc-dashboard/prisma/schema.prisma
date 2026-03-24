@@ -1,46 +1,41 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 // ─── Enums ──────────────────────────────────────────────────
 
 enum MemberRole {
-  PRESIDENT
-  VICE_PRESIDENT
-  SECRETARY
-  TREASURER
-  GENERAL_EXEC
-  SUB_COMMITTEE
+  admin
+  team_lead
+  member
 }
 
 enum Team {
-  MARKETING
-  LOGISTICS
-  FINANCE
-  CREATIVE
-  OPERATIONS
+  president
+  events
+  marketing
+  finance
+  sponsorship
+  it
 }
 
 enum EventStatus {
-  DRAFT
-  PLANNING
-  READY
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
+  planning
+  active
+  post_event
+  archived
 }
 
 enum TaskStatus {
-  NOT_STARTED
-  IN_PROGRESS
-  COMPLETED
-  BLOCKED
+  not_started
+  in_progress
+  completed
+  blocked
 }
 
 enum TaskCategory {
@@ -54,13 +49,12 @@ enum TaskCategory {
 }
 
 enum NotificationType {
-  TASK_ASSIGNED
-  TASK_DUE
-  TASK_COMPLETED
-  EVENT_UPDATE
-  EOP_REMINDER
-  MEETING_SCHEDULED
-  GENERAL
+  deadline_approaching
+  task_overdue
+  eop_warning
+  weekly_digest
+  task_assigned
+  status_change
 }
 
 enum NotificationChannel {
@@ -88,6 +82,7 @@ model Member {
 
   // Relations
   mainContactEvents  Event[]           @relation("MainContact")
+  createdEvents      Event[]           @relation("EventCreator")
   eventMembers       EventMember[]
   assignedTasks      Task[]            @relation("TaskAssignee")
   completedEopItems  EopItem[]         @relation("EopCompletedBy")
@@ -105,15 +100,18 @@ model Event {
   time                String?
   venue               String?
   estimatedAttendance Int?        @map("estimated_attendance")
-  status              EventStatus @default(DRAFT)
+  status              EventStatus @default(planning)
   description         String?
   mainContactId       String?     @map("main_contact_id")
+  mainContactPhone    String?     @map("main_contact_phone")
+  createdById         String?     @map("created_by_id")
   collaboratingClubs  String[]    @default([]) @map("collaborating_clubs")
   createdAt           DateTime    @default(now()) @map("created_at")
   updatedAt           DateTime    @updatedAt @map("updated_at")
 
   // Relations
   mainContact         Member?              @relation("MainContact", fields: [mainContactId], references: [id])
+  createdBy           Member?              @relation("EventCreator", fields: [createdById], references: [id])
   eventMembers        EventMember[]
   tasks               Task[]
   eopItems            EopItem[]
@@ -124,6 +122,7 @@ model Event {
   @@index([status])
   @@index([date])
   @@index([mainContactId])
+  @@index([createdById])
   @@map("events")
 }
 
@@ -142,7 +141,7 @@ model EventMember {
 
 model TaskTemplate {
   id           String       @id @default(uuid())
-  text         String
+  text         String       @unique
   category     TaskCategory
   defaultTeam  Team?        @map("default_team")
   isEopRelated Boolean      @default(false) @map("is_eop_related")
@@ -160,7 +159,7 @@ model Task {
   templateId  String?    @map("template_id")
   text        String
   category    TaskCategory
-  status      TaskStatus @default(NOT_STARTED)
+  status      TaskStatus @default(not_started)
   assigneeId  String?    @map("assignee_id")
   deadline    DateTime?
   notes       String?
@@ -179,6 +178,7 @@ model Task {
   @@index([assigneeId])
   @@index([status])
   @@index([category])
+  @@index([deadline])
   @@map("tasks")
 }
 

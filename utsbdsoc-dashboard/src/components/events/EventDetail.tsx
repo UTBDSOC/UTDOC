@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Event, Task, Member } from '@/types'
+import { Event, Task, Member, EOPItem as EOPItemType, EventFile, MeetingMinutes } from '@/types'
 import { 
   Calendar, 
   MapPin, 
@@ -16,6 +16,10 @@ import {
 import { cn, formatDate } from '@/lib/utils'
 import StatusBadge from '@/components/shared/StatusBadge'
 import TaskBoard from './TaskBoard'
+import EOPChecklist from './EOPChecklist'
+import FileGallery from './FileGallery'
+import MeetingMinutesList from './MeetingMinutesList'
+import MeetingMinutesForm from './MeetingMinutesForm'
 import EmptyState from '@/components/shared/EmptyState'
 import Link from 'next/link'
 
@@ -23,6 +27,9 @@ interface EventDetailProps {
   event: Event
   tasks: Task[]
   members: Member[]
+  eopItems: EOPItemType[]
+  files: EventFile[]
+  minutes: MeetingMinutes[]
 }
 
 const tabs = [
@@ -33,35 +40,47 @@ const tabs = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
-export default function EventDetail({ event, tasks, members }: EventDetailProps) {
+export default function EventDetail({ event, tasks, members, eopItems, files, minutes: initialMinutes }: EventDetailProps) {
   const [activeTab, setActiveTab] = useState('tasks')
+  const [minutes, setMinutes] = useState(initialMinutes)
+  const [isAddingMinutes, setIsCreatingMinutes] = useState(false)
+  const [selectedMinutes, setSelectedMinutes] = useState<MeetingMinutes | null>(null)
 
   const renderTabContent = () => {
     switch(activeTab) {
       case 'tasks':
         return <TaskBoard tasks={tasks} members={members} />
       case 'eop':
-        return (
-          <EmptyState 
-            icon={FileText}
-            title="EOP Checklist"
-            description="Complete the mandatory Event Operations Package (EOP) requirements. Coming in Sprint 3."
-          />
-        )
+        return <EOPChecklist event={event} initialItems={eopItems} />
       case 'files':
-        return (
-          <EmptyState 
-            icon={Paperclip}
-            title="File Gallery"
-            description="Manage and categorize all event-related documents and media. Coming in Sprint 3."
-          />
-        )
+        return <FileGallery files={files} eventId={event.id} />
       case 'minutes':
+        if (isAddingMinutes || selectedMinutes) {
+          return (
+            <MeetingMinutesForm 
+              members={members} 
+              initialData={selectedMinutes}
+              onSave={(data) => {
+                if (selectedMinutes) {
+                  setMinutes(prev => prev.map(m => m.id === selectedMinutes.id ? { ...m, ...data } : m))
+                } else {
+                  setMinutes(prev => [{ ...data, id: `min-${Date.now()}`, event_id: event.id, created_at: new Date().toISOString() }, ...prev])
+                }
+                setIsCreatingMinutes(false)
+                setSelectedMinutes(null)
+              }}
+              onCancel={() => {
+                setIsCreatingMinutes(false)
+                setSelectedMinutes(null)
+              }}
+            />
+          )
+        }
         return (
-          <EmptyState 
-            icon={MessageSquare}
-            title="Meeting Minutes"
-            description="Record and track action items from society meetings. Coming in Sprint 5."
+          <MeetingMinutesList 
+            minutes={minutes} 
+            onAddMinutes={() => setIsCreatingMinutes(true)}
+            onSelectMinutes={setSelectedMinutes}
           />
         )
       case 'settings':
@@ -121,10 +140,10 @@ export default function EventDetail({ event, tasks, members }: EventDetailProps)
           </div>
           
           <div className="flex items-center gap-3">
-            <button className="px-6 py-2.5 rounded-xl border border-white/10 text-xs font-bold text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all">
+            <button onClick={() => alert('Editing event details is coming soon.')} className="px-6 py-2.5 rounded-xl border border-white/10 text-xs font-bold text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all">
               Edit Details
             </button>
-            <button className="px-6 py-2.5 rounded-xl bg-accent-gold text-bg-primary text-xs font-bold hover:bg-accent-gold/90 transition-all shadow-lg shadow-accent-gold/10">
+            <button onClick={() => alert('Generating PDF report...')} className="px-6 py-2.5 rounded-xl bg-accent-gold text-bg-primary text-xs font-bold hover:bg-accent-gold/90 transition-all shadow-lg shadow-accent-gold/10">
               Export Report
             </button>
           </div>

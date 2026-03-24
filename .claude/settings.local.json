@@ -15,7 +15,11 @@
       "Bash(cd \"/c/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npm install -D tsx dotenv 2>&1)",
       "Bash(cd \"/c/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npx prisma generate 2>&1)",
       "Bash(cd \"/c/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npx next build 2>&1)",
-      "Bash(true:*)"
+      "Bash(true:*)",
+      "Bash(cd \"C:/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npx prisma generate 2>&1)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(cd \"C:/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npm ls | grep -i prisma 2>&1)"
     ]
   }
 }

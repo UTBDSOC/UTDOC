@@ -4,21 +4,33 @@ import React, { useState } from 'react'
 import { Task, Member } from '@/types'
 import { cn, formatDate } from '@/lib/utils'
 import StatusBadge from '@/components/shared/StatusBadge'
-import { Calendar, User, MoreVertical, Edit2 } from 'lucide-react'
+import { Calendar, User, MoreVertical } from 'lucide-react'
 
 interface TaskRowProps {
   task: Task
   members: Member[]
+  isSelected?: boolean
+  onToggleSelect?: (taskId: string) => void
   onUpdate: (taskId: string, updates: Partial<Task>) => void
 }
 
-export default function TaskRow({ task, members, onUpdate }: TaskRowProps) {
+export default function TaskRow({ task, /* eslint-disable-next-line @typescript-eslint/no-unused-vars */ members, isSelected, onToggleSelect, onUpdate }: TaskRowProps) {
   const [isEditingNotes, setIsEditingNotes] = useState(false)
   const [notes, setNotes] = useState(task.notes || '')
 
   return (
     <tr className="group border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-      <td className="py-4 pl-4 pr-3">
+      {onToggleSelect && (
+        <td className="py-4 pl-4 pr-1">
+          <input 
+            type="checkbox" 
+            checked={isSelected} 
+            onChange={() => onToggleSelect(task.id)}
+            className="w-4 h-4 rounded border-white/10 bg-bg-primary text-accent-gold focus:ring-accent-gold/30 cursor-pointer"
+          />
+        </td>
+      )}
+      <td className={cn("py-4 pr-3", !onToggleSelect && "pl-4")}>
         <div className="flex flex-col">
           <span className="text-sm font-semibold text-text-primary group-hover:text-accent-gold transition-colors">
             {task.title}
@@ -40,6 +52,7 @@ export default function TaskRow({ task, members, onUpdate }: TaskRowProps) {
           {task.assignee ? (
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full overflow-hidden border border-white/10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={task.assignee.avatar_url} alt={task.assignee.full_name} />
               </div>
               <span className="text-xs text-text-primary">{task.assignee.full_name}</span>
@@ -91,7 +104,7 @@ export default function TaskRow({ task, members, onUpdate }: TaskRowProps) {
         )}
       </td>
       <td className="py-4 pl-3 pr-4 text-right">
-        <button className="p-1 rounded hover:bg-white/5 text-text-secondary transition-colors">
+        <button onClick={() => alert('Task options coming soon.')} className="p-1 rounded hover:bg-white/5 text-text-secondary transition-colors">
           <MoreVertical className="w-4 h-4" />
         </button>
       </td>

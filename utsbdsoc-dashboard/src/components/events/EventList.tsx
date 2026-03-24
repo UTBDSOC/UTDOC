@@ -2,10 +2,9 @@
 
 import React, { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Calendar, MapPin, Users, ArrowRight, Search, Filter } from 'lucide-react'
+import { Calendar, MapPin, Users, ArrowRight, Filter } from 'lucide-react'
 import { Event, EventStatus } from '@/types'
 import { cn, formatDate } from '@/lib/utils'
-import StatusBadge from '@/components/shared/StatusBadge'
 import ProgressRing from '@/components/shared/ProgressRing'
 import SearchInput from '@/components/shared/SearchInput'
 
@@ -68,7 +67,7 @@ export default function EventList({ events }: EventListProps) {
       {/* Events Grid */}
       {filteredEvents.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvents.map((event) => (
+          {filteredEvents.map((event, index) => (
             <div 
               key={event.id}
               onClick={() => router.push(`/events/${event.id}`)}
@@ -112,7 +111,7 @@ export default function EventList({ events }: EventListProps) {
                 
                 <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <ProgressRing percentage={Math.floor(Math.random() * 100)} size={36} strokeWidth={4} />
+                    <ProgressRing percentage={(index * 37 + 13) % 100} size={36} strokeWidth={4} />
                     <div className="flex flex-col">
                       <span className="text-[10px] uppercase tracking-wider text-text-secondary font-bold">Progress</span>
                       <span className="text-xs text-text-primary font-mono">Tasks Complete</span>
@@ -121,6 +120,7 @@ export default function EventList({ events }: EventListProps) {
                   <div className="flex -space-x-2">
                     {[1, 2, 3].map((i) => (
                       <div key={i} className="w-6 h-6 rounded-full border-2 border-bg-card bg-bg-elevated overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img 
                           src={`https://api.dicebear.com/7.x/avataaars/svg?seed=Avatar${i + event.id}`} 
                           alt="Team" 

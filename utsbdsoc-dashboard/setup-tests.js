@@ -11,6 +11,7 @@
  * npm install -D vitest @vitejs/plugin-react @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom @vitest/coverage-v8 @vitest/ui
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 const path = require('path');
 
@@ -701,8 +702,8 @@ updates:
     "typescriptreact"
   ],
   "tailwindCSS.experimental.classRegex": [
-    ["clsx\\\\(([^)]*)\\\\)", "(?:'|\\\"|\\`)([^']*)(?:'|\\\"|\\`)"],
-    ["cn\\\\(([^)]*)\\\\)", "(?:'|\\\"|\\`)([^']*)(?:'|\\\"|\\`)"]
+    ["clsx\\\\(([^)]*)\\\\)", "(?:'|\\\"|\\\`)([^']*)(?:'|\\\"|\\\`)"],
+    ["cn\\\\(([^)]*)\\\\)", "(?:'|\\\"|\\\`)([^']*)(?:'|\\\"|\\\`)"]
   ]
 }
 `,
