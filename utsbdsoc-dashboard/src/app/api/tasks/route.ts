@@ -1,8 +1,14 @@
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { serializeTask } from "@/lib/serializers";
-import { ok, handleRouteError } from "@/lib/api-response";
+import {
+  ok,
+  created,
+  badRequest,
+  handleRouteError,
+} from "@/lib/api-response";
 import { TaskStatus, TaskCategory, Prisma } from "@/generated/prisma";
 
 // ─── GET /api/tasks ─────────────────────────────────────────
@@ -56,6 +62,45 @@ export async function GET(request: NextRequest) {
     ]);
 
     return ok(tasks.map(serializeTask), { total, page, limit });
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}
+
+// ─── POST /api/tasks ────────────────────────────────────────
+
+const createTaskSchema = z.object({
+  event_id: z.string().uuid(),
+  text: z.string().min(1),
+  category: z.nativeEnum(TaskCategory),
+  assignee_id: z.string().uuid().optional(),
+  deadline: z.string().optional(),
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    await requireAuth();
+
+    const body = await request.json();
+    const parsed = createTaskSchema.safeParse(body);
+    if (!parsed.success) {
+      return badRequest(parsed.error.issues.map((i) => i.message).join(", "));
+    }
+
+    const { event_id, text, category, assignee_id, deadline } = parsed.data;
+
+    const task = await prisma.task.create({
+      data: {
+        eventId: event_id,
+        text,
+        category,
+        assigneeId: assignee_id,
+        deadline: deadline ? new Date(deadline) : undefined,
+      },
+      include: { assignee: true },
+    });
+
+    return created(serializeTask(task));
   } catch (error) {
     return handleRouteError(error);
   }

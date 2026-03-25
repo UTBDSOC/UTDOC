@@ -1,19 +1,18 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  CheckSquare, 
-  Users, 
-  Settings, 
-  ChevronRight,
+import {
+  LayoutDashboard,
+  Calendar,
+  CheckSquare,
+  Users,
+  Settings,
   LogOut
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { mockEvents } from '@/lib/mock-data'
+import type { Event } from '@/types'
 
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -25,11 +24,31 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname()
-  
-  // Determine if we are on an event detail page and get the event details
+  const [activeEvent, setActiveEvent] = useState<Event | null>(null)
+
   const isEventDetail = pathname?.startsWith('/events/') && pathname !== '/events/new'
   const eventId = isEventDetail ? pathname.split('/').pop() : null
-  const activeEvent = eventId ? mockEvents.find(e => e.id === eventId) : null
+
+  useEffect(() => {
+    if (!eventId) {
+      setActiveEvent(null)
+      return
+    }
+
+    async function fetchEvent() {
+      try {
+        const res = await fetch(`/api/events/${eventId}`)
+        if (res.ok) {
+          const json = await res.json()
+          setActiveEvent(json.data ?? null)
+        }
+      } catch {
+        setActiveEvent(null)
+      }
+    }
+
+    fetchEvent()
+  }, [eventId])
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-60 bg-bg-card border-r border-white/5 flex flex-col z-40">
@@ -53,8 +72,8 @@ export default function Sidebar() {
               href={item.href}
               className={cn(
                 'group flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200',
-                isActive 
-                  ? 'bg-accent-gold/10 text-accent-gold shadow-[0_0_15px_rgba(232,197,71,0.05)]' 
+                isActive
+                  ? 'bg-accent-gold/10 text-accent-gold shadow-[0_0_15px_rgba(232,197,71,0.05)]'
                   : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
               )}
             >
@@ -78,7 +97,7 @@ export default function Sidebar() {
             <div className="flex items-center gap-3">
               <div className={cn(
                 "w-2 h-2 rounded-full animate-pulse shrink-0",
-                activeEvent.status === 'active' ? 'bg-status-green' : 
+                activeEvent.status === 'active' ? 'bg-status-green' :
                 activeEvent.status === 'planning' ? 'bg-status-yellow' : 'bg-status-gray'
               )} />
               <span className="text-sm font-semibold text-text-primary truncate" title={activeEvent.name}>

@@ -1,35 +1,30 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import EventList from "@/components/events/EventList";
 import { prisma } from "@/lib/prisma";
 import { serializeEvent } from "@/lib/serializers";
-import { mockEvents } from "@/lib/mock-data";
-import type { Event } from "@/types";
-
-export const dynamic = "force-dynamic";
 
 export default async function EventsPage() {
-  let serialized: Event[];
+  const events = await prisma.event.findMany({
+    where: { status: { not: "archived" } },
+    include: { mainContact: true },
+    orderBy: { date: "desc" },
+  });
 
-  try {
-    const events = await prisma.event.findMany({
-      where: { status: { not: "archived" } },
-      include: { mainContact: true },
-      orderBy: { date: "desc" },
-    });
-    serialized = events.map(serializeEvent);
-  } catch (err) {
-    console.warn("Database unavailable, using mock data:", (err as Error).message);
-    serialized = mockEvents;
-  }
+  const serialized = events.map(serializeEvent);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary font-sans">Event Management</h1>
+          <h1 className="text-2xl font-bold text-text-primary font-sans">
+            Event Management
+          </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Centralized hub for all society planning, operations, and compliance.
+            Centralized hub for all society planning, operations, and
+            compliance.
           </p>
         </div>
         <Link

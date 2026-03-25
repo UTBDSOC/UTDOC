@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Bell, Search, Menu, CheckCircle2, AlertTriangle, MessageSquare } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import { mockNotifications } from '@/lib/mock-data'
 import { cn, formatRelativeDate } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -24,7 +23,7 @@ export default function TopBar({ onToggleSidebar }: TopBarProps) {
   const title = pageTitles[pathname] || 'Dashboard'
   
   const [isNotifOpen, setIsNotifOpen] = useState(false)
-  const [notifications, setNotifications] = useState(mockNotifications)
+  const [notifications, setNotifications] = useState<Array<{ id: string; title: string; body: string; type: string; is_read: boolean; created_at: string; link?: string }>>([])
   const notifRef = useRef<HTMLDivElement>(null)
 
   const unreadCount = notifications.filter(n => !n.is_read).length

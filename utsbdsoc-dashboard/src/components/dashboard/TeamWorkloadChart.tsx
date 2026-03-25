@@ -11,6 +11,12 @@ interface TeamWorkloadChartProps {
 }
 
 export default function TeamWorkloadChart({ tasks, members }: TeamWorkloadChartProps) {
+  const [isMounted, setIsMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   // Calculate workload per member
   const data = members.map(member => {
     const memberTasks = tasks.filter(t => t.assignee_id === member.id && t.status !== 'completed')
@@ -22,7 +28,7 @@ export default function TeamWorkloadChart({ tasks, members }: TeamWorkloadChartP
     }
   }).sort((a, b) => b.tasks - a.tasks).slice(0, 5) // Top 5 busiest
 
-  if (data.length === 0) return null
+  if (data.length === 0 || !isMounted) return <div className="min-h-[250px] w-full flex items-center justify-center p-6 text-text-secondary text-sm">Loading workload data...</div>
 
   // Custom colors based on role/load
   const getBarColor = (tasksCount: number) => {
@@ -44,7 +50,7 @@ export default function TeamWorkloadChart({ tasks, members }: TeamWorkloadChartP
       </div>
 
       <div className="flex-1 w-full min-h-[250px]">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={280} minHeight={250} minWidth={1}>
           <BarChart
             data={data}
             layout="vertical"

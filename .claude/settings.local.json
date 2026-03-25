@@ -19,7 +19,10 @@
       "Bash(cd \"C:/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npx prisma generate 2>&1)",
       "Bash(head:*)",
       "Bash(tail:*)",
-      "Bash(cd \"C:/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npm ls | grep -i prisma 2>&1)"
+      "Bash(cd \"C:/Users/wasif/OneDrive/Desktop/teehee/03 Projects/UTDOC/utsbdsoc-dashboard\" && npm ls | grep -i prisma 2>&1)",
+      "Bash(cd utsbdsoc-dashboard:*)",
+      "Bash(cat:*)",
+      "Bash(sort:*)"
     ]
   }
 }

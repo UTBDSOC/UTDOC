@@ -1,21 +1,53 @@
 /* eslint-disable @next/next/no-img-element */
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Plus, Users, ShieldAlert } from 'lucide-react'
-import { mockMembers, mockTasks } from '@/lib/mock-data'
-import { Member, MemberRole } from '@/types'
+import { Member, MemberRole, Task } from '@/types'
 import MemberList from '@/components/team/MemberList'
 import InviteMemberModal from '@/components/team/InviteMemberModal'
 import AvailabilityGrid from '@/components/team/AvailabilityGrid'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 export default function TeamPage() {
-  const [members, setMembers] = useState<Member[]>(mockMembers)
+  const [members, setMembers] = useState<Member[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
-  const [selectedMember, setSelectedMember] = useState<Member | null>(members[0])
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false)
   const [isEditingRole, setIsEditingRole] = useState(false)
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [membersRes, tasksRes] = await Promise.all([
+          fetch('/api/members'),
+          fetch('/api/tasks'),
+        ])
+
+        if (membersRes.ok) {
+          const membersJson = await membersRes.json()
+          const memberList = membersJson.data ?? []
+          setMembers(memberList)
+          if (memberList.length > 0) {
+            setSelectedMember(memberList[0])
+          }
+        }
+
+        if (tasksRes.ok) {
+          const tasksJson = await tasksRes.json()
+          setTasks(tasksJson.data ?? [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch team data:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const handleRoleChange = (newRole: MemberRole) => {
     if (!selectedMember) return
@@ -32,6 +64,14 @@ export default function TeamPage() {
     setIsRemoveDialogOpen(false)
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-text-secondary text-sm">Loading team...</div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8 pb-20">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
@@ -41,8 +81,8 @@ export default function TeamPage() {
             Manage society members, roles, and view availability schedules.
           </p>
         </div>
-        
-        <button 
+
+        <button
           onClick={() => setIsInviteModalOpen(true)}
           className="flex items-center justify-center gap-2 rounded-xl bg-accent-gold px-6 py-3 text-sm font-bold text-bg-primary transition-all hover:bg-accent-gold/90 shadow-lg shadow-accent-gold/10"
         >
@@ -60,13 +100,13 @@ export default function TeamPage() {
             </div>
             <h2 className="text-lg font-bold text-text-primary">Directory</h2>
           </div>
-          <MemberList 
-            members={members} 
-            tasks={mockTasks} 
+          <MemberList
+            members={members}
+            tasks={tasks}
             onSelectMember={(member) => {
               setSelectedMember(member)
               setIsEditingRole(false)
-            }} 
+            }}
           />
         </div>
 
@@ -93,16 +133,16 @@ export default function TeamPage() {
                   )}
                 </div>
               </div>
-              
+
               <div className="pt-12 p-6">
                 <h3 className="text-xl font-bold text-text-primary mb-1">{selectedMember.full_name}</h3>
                 <p className="text-sm text-text-secondary mb-4">{selectedMember.email}</p>
-                
+
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="bg-bg-elevated/50 border border-white/5 rounded-xl p-3 relative">
                     <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mb-1">Role</span>
                     {isEditingRole ? (
-                      <select 
+                      <select
                         autoFocus
                         onBlur={() => setIsEditingRole(false)}
                         onChange={(e) => handleRoleChange(e.target.value as MemberRole)}
@@ -124,14 +164,14 @@ export default function TeamPage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <button 
-                    onClick={() => setIsEditingRole(!isEditingRole)} 
+                  <button
+                    onClick={() => setIsEditingRole(!isEditingRole)}
                     className="flex-1 py-2 rounded-lg border border-white/10 text-xs font-bold text-text-primary hover:bg-white/5 transition-colors"
                   >
                     {isEditingRole ? 'Cancel' : 'Edit Role'}
                   </button>
-                  <button 
-                    onClick={() => setIsRemoveDialogOpen(true)} 
+                  <button
+                    onClick={() => setIsRemoveDialogOpen(true)}
                     className="flex-1 py-2 rounded-lg border border-status-red/20 text-xs font-bold text-status-red hover:bg-status-red/10 transition-colors"
                   >
                     Remove
@@ -153,9 +193,9 @@ export default function TeamPage() {
         </div>
       </div>
 
-      <InviteMemberModal 
-        isOpen={isInviteModalOpen} 
-        onClose={() => setIsInviteModalOpen(false)} 
+      <InviteMemberModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
       />
 
       <ConfirmDialog
