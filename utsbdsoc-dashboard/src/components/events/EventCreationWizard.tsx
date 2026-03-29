@@ -18,7 +18,6 @@ import {
 import { cn } from '@/lib/utils'
 import type { Member } from '@/types'
 import DatePicker from '@/components/shared/DatePicker'
-import StatusBadge from '@/components/shared/StatusBadge'
 
 // Form Schema
 const eventFormSchema = z.object({
@@ -299,37 +298,64 @@ export default function EventCreationWizard({ templates = [], members = [] }: Ev
             </div>
           </div>
         )
-      case 3:
+      case 3: {
+        const assignedIds = new Set(watch('team_assignments').map(a => a.member_id))
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-             <div className="bg-bg-card border border-white/5 rounded-2xl p-8 text-center max-w-lg mx-auto">
+             <div className="bg-bg-card border border-white/5 rounded-2xl p-8 max-w-lg mx-auto">
               <div className="w-16 h-16 rounded-full bg-accent-gold/10 flex items-center justify-center mx-auto mb-4">
                 <UserPlus className="w-8 h-8 text-accent-gold" />
               </div>
-              <h3 className="text-xl font-bold text-text-primary mb-2">Team Assignment</h3>
-              <p className="text-sm text-text-secondary leading-relaxed mb-6">
-                Assign members to this event. You can also define specific roles and default task owners.
+              <h3 className="text-xl font-bold text-text-primary mb-2 text-center">Team Assignment</h3>
+              <p className="text-sm text-text-secondary leading-relaxed mb-6 text-center">
+                Select members to assign to this event. Click to toggle.
               </p>
               <div className="space-y-3 text-left">
-                {members.slice(0, 3).map(m => (
-                  <div key={m.id} className="flex items-center justify-between p-3 bg-bg-elevated rounded-xl border border-white/5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={m.avatar_url} alt={m.full_name} />
+                {members.map(m => {
+                  const isAssigned = assignedIds.has(m.id)
+                  return (
+                    <button
+                      type="button"
+                      key={m.id}
+                      onClick={() => {
+                        const current = watch('team_assignments')
+                        if (isAssigned) {
+                          setValue('team_assignments', current.filter(a => a.member_id !== m.id))
+                        } else {
+                          setValue('team_assignments', [...current, { member_id: m.id, role: 'member' }])
+                        }
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between p-3 rounded-xl border transition-all",
+                        isAssigned
+                          ? "bg-accent-gold/10 border-accent-gold/30"
+                          : "bg-bg-elevated border-white/5 hover:border-white/20"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={m.avatar_url} alt={m.full_name} />
+                        </div>
+                        <div className="text-left">
+                          <span className="text-sm font-semibold text-text-primary block">{m.full_name}</span>
+                          <span className="text-[10px] text-text-secondary uppercase tracking-widest">{m.team} &middot; {m.role}</span>
+                        </div>
                       </div>
-                      <span className="text-sm font-semibold">{m.full_name}</span>
-                    </div>
-                    <StatusBadge status="completed" className="bg-accent-gold/10 text-accent-gold" />
-                  </div>
-                ))}
-                <button type="button" onClick={() => alert('Search and add members functionality coming soon.')} className="w-full py-3 border border-dashed border-white/20 rounded-xl text-xs font-bold text-text-secondary hover:text-text-primary hover:border-accent-gold/50 transition-all uppercase tracking-widest">
-                  Add Member to Event
-                </button>
+                      {isAssigned && (
+                        <CheckCircle2 className="w-5 h-5 text-accent-gold" />
+                      )}
+                    </button>
+                  )
+                })}
+                {members.length === 0 && (
+                  <p className="text-center text-sm text-text-secondary py-4">No members available.</p>
+                )}
               </div>
             </div>
           </div>
         )
+      }
       case 4:
         return (
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -373,7 +399,7 @@ export default function EventCreationWizard({ templates = [], members = [] }: Ev
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-text-secondary">Assigned Members</span>
-                    <span className="text-sm font-bold text-text-primary">3</span>
+                    <span className="text-sm font-bold text-text-primary">{watch('team_assignments').length}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-text-secondary">EOP Checklist</span>

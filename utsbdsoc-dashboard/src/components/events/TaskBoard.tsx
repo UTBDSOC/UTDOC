@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { Task, Member, TaskStatus } from '@/types'
 import TaskRow from './TaskRow'
 import TaskCreator from './TaskCreator'
@@ -12,13 +12,24 @@ import { cn } from '@/lib/utils'
 interface TaskBoardProps {
   tasks: Task[]
   members: Member[]
+  eventId: string
 }
 
 const CATEGORIES = [
   'General', 'Contracts & Proposals', 'Marketing', 'Event Program', 'Decorations', 'Food & Catering', 'Finance'
 ]
 
-export default function TaskBoard({ tasks: initialTasks, members }: TaskBoardProps) {
+const CATEGORY_API_MAP: Record<string, string> = {
+  'General': 'GENERAL',
+  'Contracts & Proposals': 'CONTRACTS_PROPOSALS',
+  'Marketing': 'MARKETING',
+  'Event Program': 'EVENT_PROGRAM',
+  'Decorations': 'DECORATIONS',
+  'Food & Catering': 'FOOD_CATERING',
+  'Finance': 'FINANCE',
+}
+
+export default function TaskBoard({ tasks: initialTasks, members, eventId }: TaskBoardProps) {
   const [tasks, setTasks] = useState(initialTasks)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table')
@@ -54,23 +65,62 @@ export default function TaskBoard({ tasks: initialTasks, members }: TaskBoardPro
   }, [filteredTasks, searchQuery])
 
   // Handlers
-  const handleUpdateTask = (taskId: string, updates: Partial<Task>) => {
+  const handleUpdateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
+    // Optimistic update
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t))
-  }
 
-  const handleAddTask = (newTask: Partial<Task>) => {
-    const task: Task = {
-      ...newTask,
-      id: `t-${Date.now()}`,
-      event_id: tasks[0]?.event_id || 'e-new',
-      status: newTask.status || 'not_started',
-      title: newTask.title || 'New Task',
-      category: newTask.category || 'General',
-      created_at: new Date().toISOString(),
-      assignee: members.find(m => m.id === newTask.assignee_id)
+    try {
+      const body: Record<string, unknown> = {}
+      if (updates.status !== undefined) body.status = updates.status
+      if (updates.assignee_id !== undefined) body.assignee_id = updates.assignee_id
+      if (updates.deadline !== undefined) body.deadline = updates.deadline
+      if (updates.notes !== undefined) body.notes = updates.notes
+      if (updates.title !== undefined) body.text = updates.title
+
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      if (!res.ok) {
+        // Revert on failure
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t))
+        console.error('Failed to update task')
+      } else {
+        const json = await res.json()
+        setTasks(prev => prev.map(t => t.id === taskId ? json.data : t))
+      }
+    } catch (err) {
+      console.error('Failed to update task:', err)
     }
-    setTasks(prev => [task, ...prev])
+  }, [])
+
+  const handleAddTask = async (newTask: Partial<Task>) => {
     setIsCreating(false)
+
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_id: eventId,
+          text: newTask.title || 'New Task',
+          category: CATEGORY_API_MAP[newTask.category || 'General'] || 'GENERAL',
+          assignee_id: newTask.assignee_id || undefined,
+          deadline: newTask.deadline || undefined,
+        }),
+      })
+
+      if (res.ok) {
+        const json = await res.json()
+        setTasks(prev => [json.data, ...prev])
+      } else {
+        console.error('Failed to create task')
+      }
+    } catch (err) {
+      console.error('Failed to create task:', err)
+    }
   }
 
   const toggleCategory = (category: string) => {
@@ -99,9 +149,27 @@ export default function TaskBoard({ tasks: initialTasks, members }: TaskBoardPro
     }
   }
 
-  const handleBulkStatusChange = (status: TaskStatus) => {
+  const handleBulkStatusChange = async (status: TaskStatus) => {
+    const ids = Array.from(selectedTaskIds)
+    // Optimistic
     setTasks(prev => prev.map(t => selectedTaskIds.has(t.id) ? { ...t, status } : t))
     setSelectedTaskIds(new Set())
+
+    try {
+      const res = await fetch('/api/tasks/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_ids: ids, updates: { status } }),
+      })
+
+      if (res.ok) {
+        const json = await res.json()
+        const updatedMap = new Map((json.data as Task[]).map(t => [t.id, t]))
+        setTasks(prev => prev.map(t => updatedMap.get(t.id) ?? t))
+      }
+    } catch (err) {
+      console.error('Failed to bulk update tasks:', err)
+    }
   }
 
   const handleBulkDelete = () => {

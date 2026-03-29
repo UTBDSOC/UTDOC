@@ -49,19 +49,56 @@ export default function TeamPage() {
     fetchData()
   }, [])
 
-  const handleRoleChange = (newRole: MemberRole) => {
+  const handleRoleChange = async (newRole: MemberRole) => {
     if (!selectedMember) return
+    const prev = selectedMember
+
+    // Optimistic update
     const updatedMember = { ...selectedMember, role: newRole }
-    setMembers(prev => prev.map(m => m.id === updatedMember.id ? updatedMember : m))
+    setMembers(ms => ms.map(m => m.id === updatedMember.id ? updatedMember : m))
     setSelectedMember(updatedMember)
     setIsEditingRole(false)
+
+    try {
+      const res = await fetch(`/api/members/${selectedMember.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      })
+
+      if (res.ok) {
+        const json = await res.json()
+        setMembers(ms => ms.map(m => m.id === json.data.id ? json.data : m))
+        setSelectedMember(json.data)
+      } else {
+        // Revert on failure
+        setMembers(ms => ms.map(m => m.id === prev.id ? prev : m))
+        setSelectedMember(prev)
+      }
+    } catch (err) {
+      console.error('Failed to update role:', err)
+      setMembers(ms => ms.map(m => m.id === prev.id ? prev : m))
+      setSelectedMember(prev)
+    }
   }
 
-  const handleRemoveMember = () => {
+  const handleRemoveMember = async () => {
     if (!selectedMember) return
-    setMembers(prev => prev.filter(m => m.id !== selectedMember.id))
-    setSelectedMember(null)
-    setIsRemoveDialogOpen(false)
+
+    try {
+      const res = await fetch(`/api/members/${selectedMember.id}`, {
+        method: 'DELETE',
+      })
+
+      if (res.ok) {
+        setMembers(prev => prev.filter(m => m.id !== selectedMember.id))
+        setSelectedMember(null)
+      }
+    } catch (err) {
+      console.error('Failed to remove member:', err)
+    } finally {
+      setIsRemoveDialogOpen(false)
+    }
   }
 
   if (loading) {
@@ -196,6 +233,13 @@ export default function TeamPage() {
       <InviteMemberModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
+        onMemberAdded={async () => {
+          const res = await fetch('/api/members')
+          if (res.ok) {
+            const json = await res.json()
+            setMembers(json.data ?? [])
+          }
+        }}
       />
 
       <ConfirmDialog

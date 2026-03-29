@@ -59,25 +59,70 @@ export default function EOPChecklist({ event, initialItems }: EOPChecklistProps)
     }
   }, [items, event.date])
 
-  const handleToggleComplete = (id: string, isCompleted: boolean) => {
-    setItems(prev => prev.map(item => 
+  const handleToggleComplete = async (id: string, isCompleted: boolean) => {
+    // Optimistic update
+    setItems(prev => prev.map(item =>
       item.id === id ? { ...item, is_completed: isCompleted } : item
     ))
+
+    try {
+      const res = await fetch(`/api/events/${event.id}/eop-items/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_completed: isCompleted }),
+      })
+
+      if (res.ok) {
+        const json = await res.json()
+        setItems(prev => prev.map(item => item.id === id ? json.data : item))
+      } else {
+        // Revert on failure
+        setItems(prev => prev.map(item =>
+          item.id === id ? { ...item, is_completed: !isCompleted } : item
+        ))
+      }
+    } catch (err) {
+      console.error('Failed to update EOP item:', err)
+      setItems(prev => prev.map(item =>
+        item.id === id ? { ...item, is_completed: !isCompleted } : item
+      ))
+    }
   }
 
   const handleUploadFile = async (id: string, file: File) => {
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    setItems(prev => prev.map(item => 
-      item.id === id ? { 
-        ...item, 
-        is_completed: true, 
-        file_url: URL.createObjectURL(file), // Mock URL
+    // For now, create an object URL as placeholder
+    // In production, upload to Supabase Storage first
+    const fileUrl = URL.createObjectURL(file)
+
+    setItems(prev => prev.map(item =>
+      item.id === id ? {
+        ...item,
+        is_completed: true,
+        file_url: fileUrl,
         uploaded_at: new Date().toISOString()
       } : item
     ))
-    return 'mock-url'
+
+    try {
+      const res = await fetch(`/api/events/${event.id}/eop-items/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          is_completed: true,
+          file_url: fileUrl,
+          file_name: file.name,
+        }),
+      })
+
+      if (res.ok) {
+        const json = await res.json()
+        setItems(prev => prev.map(item => item.id === id ? json.data : item))
+      }
+    } catch (err) {
+      console.error('Failed to update EOP item file:', err)
+    }
+
+    return fileUrl
   }
 
   return (

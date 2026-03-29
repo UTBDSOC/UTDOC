@@ -8,30 +8,50 @@ import { Mail, CheckCircle2 } from 'lucide-react'
 interface InviteMemberModalProps {
   isOpen: boolean
   onClose: () => void
+  onMemberAdded?: () => void
 }
 
-export default function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
+export default function InviteMemberModal({ isOpen, onClose, onMemberAdded }: InviteMemberModalProps) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<MemberRole>('member')
   const [team, setTeam] = useState<TeamName>('general')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email) return
-    
+
     setIsSubmitting(true)
-    // Simulate API call
-    setTimeout(() => {
+    setError('')
+
+    try {
+      const res = await fetch('/api/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role, team }),
+      })
+
+      if (res.ok) {
+        setIsSuccess(true)
+        onMemberAdded?.()
+        setTimeout(() => {
+          setIsSuccess(false)
+          setEmail('')
+          setError('')
+          onClose()
+        }, 2000)
+      } else {
+        const json = await res.json()
+        setError(json.error || 'Failed to invite member')
+      }
+    } catch (err) {
+      console.error('Failed to invite member:', err)
+      setError('Network error. Please try again.')
+    } finally {
       setIsSubmitting(false)
-      setIsSuccess(true)
-      setTimeout(() => {
-        setIsSuccess(false)
-        setEmail('')
-        onClose()
-      }, 2000)
-    }, 1000)
+    }
   }
 
   return (
@@ -92,6 +112,10 @@ export default function InviteMemberModal({ isOpen, onClose }: InviteMemberModal
               </select>
             </div>
           </div>
+
+          {error && (
+            <p className="text-xs text-status-red font-bold">{error}</p>
+          )}
 
           <div className="pt-4 flex justify-end gap-3">
             <button

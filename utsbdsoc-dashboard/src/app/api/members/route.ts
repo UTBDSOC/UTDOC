@@ -1,8 +1,15 @@
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { serializeMember } from "@/lib/serializers";
-import { ok, handleRouteError } from "@/lib/api-response";
+import {
+  ok,
+  created,
+  badRequest,
+  forbidden,
+  handleRouteError,
+} from "@/lib/api-response";
 import { MemberRole, Team, Prisma } from "@/generated/prisma";
 
 // ─── GET /api/members ──────────────────────────────────────
@@ -52,6 +59,57 @@ export async function GET(request: NextRequest) {
     ]);
 
     return ok(members.map(serializeMember), { total, page, limit });
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}
+
+// ─── POST /api/members ─────────────────────────────────────
+
+const createMemberSchema = z.object({
+  email: z.string().email(),
+  role: z.nativeEnum(MemberRole).optional().default("member"),
+  team: z.nativeEnum(Team).optional(),
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    const { member: currentUser } = await requireAuth();
+
+    if (currentUser.role !== "admin" && currentUser.role !== "team_lead") {
+      return forbidden("Only admins and team leads can invite members");
+    }
+
+    const body = await request.json();
+    const parsed = createMemberSchema.safeParse(body);
+    if (!parsed.success) {
+      return badRequest(parsed.error.issues.map((i) => i.message).join(", "));
+    }
+
+    const { email, role, team } = parsed.data;
+
+    // Check for existing member
+    const existing = await prisma.member.findUnique({ where: { email } });
+    if (existing) {
+      if (!existing.isActive) {
+        // Re-activate deactivated member
+        const reactivated = await prisma.member.update({
+          where: { email },
+          data: { isActive: true, role, team },
+        });
+        return created(serializeMember(reactivated));
+      }
+      return badRequest("A member with this email already exists");
+    }
+
+    // Derive name from email
+    const name = email.split("@")[0].replace(/[._-]/g, " ");
+
+    const member = await prisma.member.create({
+      data: { email, name, role, team },
+    });
+
+    return created(serializeMember(member));
   } catch (error) {
     return handleRouteError(error);
   }

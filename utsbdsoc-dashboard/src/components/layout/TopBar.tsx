@@ -24,9 +24,26 @@ export default function TopBar({ onToggleSidebar }: TopBarProps) {
   
   const [isNotifOpen, setIsNotifOpen] = useState(false)
   const [notifications, setNotifications] = useState<Array<{ id: string; title: string; body: string; type: string; is_read: boolean; created_at: string; link?: string }>>([])
+  const [profile, setProfile] = useState<{ full_name: string; role: string; avatar_url?: string } | null>(null)
   const notifRef = useRef<HTMLDivElement>(null)
 
   const unreadCount = notifications.filter(n => !n.is_read).length
+
+  // Fetch notifications on mount
+  useEffect(() => {
+    fetch('/api/notifications')
+      .then(res => res.json())
+      .then(json => { if (json.success) setNotifications(json.data) })
+      .catch(() => {})
+  }, [])
+
+  // Fetch current user profile
+  useEffect(() => {
+    fetch('/api/me')
+      .then(res => res.json())
+      .then(json => { if (json.success) setProfile(json.data) })
+      .catch(() => {})
+  }, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -41,10 +58,20 @@ export default function TopBar({ onToggleSidebar }: TopBarProps) {
 
   const markAsRead = (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
+    fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notification_ids: [id] }),
+    }).catch(() => {})
   }
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+    fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mark_all_read: true }),
+    }).catch(() => {})
   }
 
   const getNotifIcon = (type: string) => {
@@ -185,14 +212,14 @@ export default function TopBar({ onToggleSidebar }: TopBarProps) {
         {/* User Avatar */}
         <div className="flex items-center gap-3 pl-2 border-l border-white/10">
           <div className="hidden sm:flex flex-col items-end">
-            <span className="text-sm font-semibold text-text-primary leading-none">Wasif Karim</span>
-            <span className="text-[10px] text-accent-gold font-mono font-bold uppercase tracking-widest mt-0.5">Admin</span>
+            <span className="text-sm font-semibold text-text-primary leading-none">{profile?.full_name ?? 'Loading...'}</span>
+            <span className="text-[10px] text-accent-gold font-mono font-bold uppercase tracking-widest mt-0.5">{profile?.role ?? ''}</span>
           </div>
           <div className="w-8 h-8 rounded-full bg-bg-elevated border border-accent-gold/30 p-0.5 overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wasif" 
-              alt="User" 
+            <img
+              src={profile?.avatar_url ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=default`}
+              alt="User"
               className="w-full h-full object-cover rounded-full"
             />
           </div>
